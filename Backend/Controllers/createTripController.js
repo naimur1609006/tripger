@@ -107,40 +107,10 @@ async function updateTripDetails(req, res) {
   }
 }
 
-async function updateTripAddMoney(req, res) {
-  const {trips_id, additionalMoney} = req.body;
-
-  try {
-    // Find the trip by ID
-    const trip = await Trip.findById(trips_id);
-
-    console.log(trip);
-
-    if (!trip) {
-      return res.status(404).json({message: 'Trip not found'});
-    }
-
-    // Update initial amount based on new money and additional money
-    if (additionalMoney) {
-      trip.initialAmount += additionalMoney;
-    }
-
-    // Save the updated trip
-    await trip.save();
-
-    return res.json({message: 'Trip updated successfully', tripDetails: trip});
-  } catch (error) {
-    return res
-      .status(500)
-      .json({message: `Something went wrong: ${error.message}`});
-  }
-}
-
 module.exports = {
   createTrip,
   getTripDetails,
   getSingleTripDetails,
   getTripDetailsById,
   updateTripDetails,
-  updateTripAddMoney,
 };

@@ -8,7 +8,6 @@ const {
   getSingleTripDetails,
   getTripDetailsById,
   updateTripDetails,
-  updateTripAddMoney,
 } = require('../Controllers/createTripController.js');
 
 //Create Trip Route
@@ -25,7 +24,5 @@ route.get('/getSingleTrip/:id', authenticate, getSingleTripDetails);
 
 // update single trip details route
 route.patch('/updateSingleTrip/:id', authenticate, updateTripDetails);
-
-route.patch('/member/:id', updateTripAddMoney);
 
 module.exports = route;
