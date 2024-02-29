@@ -27,6 +27,7 @@ const HomeScreen = ({navigation}) => {
   const {userToken, userInfo} = useContext(AuthContext);
 
   const [searchinfo, setSearchInfo] = useState('');
+  const [memberId, setMemberId] = useState('');
 
   const [allTrips, setAllTrips] = useState(1);
 
@@ -96,11 +97,16 @@ const HomeScreen = ({navigation}) => {
   const renderItem = ({item}) => {
     return (
       <TripCard
-        onPress={() =>
+        onPress={() => {
+          const memberIds = [];
+          item.members.forEach(member => {
+            memberIds.push(member._id);
+          });
           navigation.navigate('SingleTripView', {
             trips_id: item._id,
-          })
-        }
+            memberIds: memberIds,
+          });
+        }}
         cardViewStyle={{
           width: windowWidth - 40,
           marginHorizontal: 20,

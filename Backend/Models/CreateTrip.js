@@ -13,7 +13,7 @@ const MemberSchema = new Schema({
   },
   additionalAmounts: {
     type: [Number], // Array to store additional amounts
-    default: [],
+    default: [0],
   },
 });
 

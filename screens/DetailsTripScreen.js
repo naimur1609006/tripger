@@ -7,6 +7,7 @@ import {
   Button,
   TextInput,
   ScrollView,
+  Alert,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import React, {useContext, useState, useEffect, useRef} from 'react';
@@ -26,9 +27,12 @@ import {useFocusEffect} from '@react-navigation/native';
 
 const DetailsTripScreen = ({navigation}) => {
   const route = useRoute();
+
   const {userToken} = useContext(AuthContext);
 
   const [singleTripDetails, setSingleTripDetails] = useState('');
+
+  const [individualMemberDetails, setIndividualMemberDetails] = useState(null);
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -93,9 +97,23 @@ const DetailsTripScreen = ({navigation}) => {
   //For Money BottomSheet
   const bottomSheetModalRef4 = useRef(null);
 
-  function handlePresentModalForMoney() {
-    bottomSheetModalRef4.current?.present();
-    setIsOpen(true);
+  async function handlePresentModalForMoney(memberId) {
+    try {
+      bottomSheetModalRef4.current?.present();
+      setIsOpen(true);
+      const response = await axios.get(
+        `http://localhost:8080/api/trip/${route.params.trips_id}/members/${memberId}`,
+        {
+          headers: {
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+      console.log(response.data.member);
+      setIndividualMemberDetails(response.data.member);
+    } catch (error) {
+      console.log(error, 'in handle money bottom sheet');
+    }
   }
 
   function handleCloseModalForMoney() {
@@ -211,7 +229,6 @@ const DetailsTripScreen = ({navigation}) => {
   const [errorMessage, setErrorMessage] = useState('');
 
   // Add Text Fields in member list by clicking button
-
   const addTextField = () => {
     const newTextField = {
       id: textFields.length ? textFields[textFields.length - 1].id + 1 : 0,
@@ -235,7 +252,6 @@ const DetailsTripScreen = ({navigation}) => {
   };
 
   //remove textfields by clicking remove button in member list
-
   const removeTextField = fieldId => {
     if (textFields.length === 1) return;
     const updatedTextFields = textFields.filter(field => field.id !== fieldId);
@@ -246,7 +262,7 @@ const DetailsTripScreen = ({navigation}) => {
   const handleUpdateMember = async () => {
     try {
       const response = await axios.patch(
-        `http://localhost:8080/api/trip/updateSingleTrip/${route.params.trips_id}`,
+        `http://localhost:8080/api/trip/updateSingleTrip/addMember/${route.params.trips_id}`,
         {
           newMembers: textFields,
         },
@@ -262,6 +278,12 @@ const DetailsTripScreen = ({navigation}) => {
         ...prevTripDetails,
         members: response.data.updatedTrip.members,
       }));
+
+      setTextFields([
+        {id: 0, name: '', amount: ''},
+        {id: 1, name: '', amount: ''},
+        {id: 2, name: '', amount: ''},
+      ]);
       handleCloseModalForMembers();
     } catch (error) {
       console.error('Error updating trip details:', error);
@@ -276,6 +298,7 @@ const DetailsTripScreen = ({navigation}) => {
           height: windowHeight,
           backgroundColor: '#f2f2f2',
         }}>
+        {/* Image Upload BottomSheet */}
         <BottomSheetModal
           ref={bottomSheetModalRef2}
           index={0}
@@ -342,6 +365,7 @@ const DetailsTripScreen = ({navigation}) => {
           </View>
         </BottomSheetModal>
 
+        {/* Add Expense BottomSheet */}
         <BottomSheetModal
           ref={bottomSheetModalRef}
           index={0}
@@ -439,6 +463,7 @@ const DetailsTripScreen = ({navigation}) => {
           </ScrollView>
         </BottomSheetModal>
 
+        {/* New Member Add Bottom Sheet */}
         <BottomSheetModal
           ref={bottomSheetModalRef3}
           index={0}
@@ -502,6 +527,7 @@ const DetailsTripScreen = ({navigation}) => {
                     marginBottom: 10,
                   }}>
                   <TextInput
+                    key="member-name-textInput"
                     style={{
                       height: 30,
                       width: '65%',
@@ -518,6 +544,7 @@ const DetailsTripScreen = ({navigation}) => {
                     onPressIn={() => setErrorMessage(null)}
                   />
                   <TextInput
+                    key="amount-textInput"
                     style={{
                       height: 30,
                       width: '30%',
@@ -576,6 +603,7 @@ const DetailsTripScreen = ({navigation}) => {
           </ScrollView>
         </BottomSheetModal>
 
+        {/*  Add Money Bottom Sheet*/}
         <BottomSheetModal
           ref={bottomSheetModalRef4}
           index={0}
@@ -600,76 +628,73 @@ const DetailsTripScreen = ({navigation}) => {
               </TouchableOpacity>
             </View>
 
-            {singleTripDetails.members &&
-              singleTripDetails.members.length > 0 &&
-              singleTripDetails.members.map((member, index) => (
-                <View
-                  style={{
-                    width: windowWidth - 40,
-                    marginHorizontal: 20,
-                    marginTop: 20,
-                  }}>
-                  <Text
-                    style={{fontSize: 10, fontWeight: '800', color: '#ccc'}}>
-                    Member Name {index + 1}
-                  </Text>
-                  <View style={{flexDirection: 'row'}}>
-                    <View
+            {individualMemberDetails && (
+              <View
+                style={{
+                  width: windowWidth - 40,
+                  marginHorizontal: 20,
+                  marginTop: 20,
+                }}>
+                <Text style={{fontSize: 10, fontWeight: '800', color: '#ccc'}}>
+                  Member Name
+                </Text>
+                <View style={{flexDirection: 'row'}}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      borderBottomColor: '#0085FF',
+                      borderBottomWidth: 1,
+                      alignItems: 'center',
+                      width: '60%',
+                      height: 40,
+                    }}>
+                    <MaterialCommunityIcons
+                      name="rename-box"
+                      size={17}
+                      color={'#0085FF'}
+                    />
+                    <TextInput
+                      value={individualMemberDetails.name}
                       style={{
-                        flexDirection: 'row',
-                        borderBottomColor: '#0085FF',
-                        borderBottomWidth: 1,
-                        alignItems: 'center',
-                        width: '60%',
-                        height: 40,
-                      }}>
-                      <MaterialCommunityIcons
-                        name="rename-box"
-                        size={17}
-                        color={'#0085FF'}
-                      />
-                      <TextInput
-                        value={member.name}
-                        style={{
-                          fontSize: 14,
-                          paddingLeft: 20,
-                          color: '#000',
-                          fontWeight: '700',
-                        }}
-                        onChangeText={text => {
-                          // Handle text change if needed
-                        }}
-                      />
-                    </View>
+                        fontSize: 14,
+                        paddingLeft: 20,
+                        color: '#000',
+                        fontWeight: '700',
+                      }}
+                      onChangeText={text => {
+                        // Handle text change if needed
+                      }}
+                    />
+                  </View>
 
-                    <View
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      borderBottomColor: '#0085FF',
+                      borderBottomWidth: 1,
+                      alignItems: 'center',
+                      width: '33%',
+                      height: 40,
+                      marginLeft: 20,
+                    }}>
+                    <FontAwesome name="money" size={17} color={'#0085FF'} />
+                    <TextInput
+                      value={''}
+                      placeholder="Add Money"
                       style={{
-                        flexDirection: 'row',
-                        borderBottomColor: '#0085FF',
-                        borderBottomWidth: 1,
-                        alignItems: 'center',
-                        width: '33%',
-                        height: 40,
-                        marginLeft: 20,
-                      }}>
-                      <FontAwesome name="money" size={17} color={'#0085FF'} />
-                      <TextInput
-                        value={member.amount}
-                        placeholder="Add Money"
-                        style={{
-                          fontSize: 14,
-                          paddingLeft: 10,
-                          color: '#000',
-                          fontWeight: '700',
-                        }}
-                        onChangeText={text => {
-                          // Handle text change if needed
-                        }}
-                      />
-                    </View>
+                        fontSize: 14,
+                        paddingLeft: 10,
+                        color: '#000',
+                        fontWeight: '700',
+                      }}
+                      onChangeText={text => {
+                        // Handle text change if needed
+                      }}
+                    />
                   </View>
                 </View>
-              ))}
+              </View>
+            )}
 
             <TouchableOpacity
               style={{
@@ -680,7 +705,7 @@ const DetailsTripScreen = ({navigation}) => {
                 borderRadius: 20,
                 marginTop: 20,
               }}
-              onPress={handleAddExpense}>
+              onPress={() => {}}>
               <Text style={{fontSize: 12, fontWeight: '600', color: '#fff'}}>
                 Add Money
               </Text>
@@ -688,6 +713,7 @@ const DetailsTripScreen = ({navigation}) => {
           </ScrollView>
         </BottomSheetModal>
 
+        {/* Header Portion */}
         <View
           style={{
             width: windowWidth - 40,
@@ -713,7 +739,9 @@ const DetailsTripScreen = ({navigation}) => {
           <View style={{width: 50, height: 50}}></View>
         </View>
 
+        {/* Full Body Portion */}
         <ScrollView>
+          {/* For Image Upload Portion */}
           <View
             style={{
               width: windowWidth - 40,
@@ -759,6 +787,7 @@ const DetailsTripScreen = ({navigation}) => {
             )}
           </View>
 
+          {/* Trip Basic Information */}
           <View
             style={{
               width: windowWidth - 40,
@@ -806,7 +835,9 @@ const DetailsTripScreen = ({navigation}) => {
             </Text>
           </View>
 
+          {/* Member List */}
           <View
+            key="member"
             style={{
               width: windowWidth - 40,
               marginHorizontal: 20,
@@ -829,7 +860,7 @@ const DetailsTripScreen = ({navigation}) => {
               Member Lists
             </Text>
 
-            {showUploadImageButton && (
+            {/* {showUploadImageButton && (
               <TouchableOpacity
                 style={{
                   paddingVertical: 8,
@@ -848,27 +879,61 @@ const DetailsTripScreen = ({navigation}) => {
                   Add Money
                 </Text>
               </TouchableOpacity>
-            )}
+            )} */}
 
             {singleTripDetails.members &&
             singleTripDetails.members.length > 0 ? (
               singleTripDetails.members.map((member, index) => (
-                <Text
+                <View
                   key={member._id}
                   style={{
-                    color: '#777777',
-                    fontSize: 12,
-                    fontWeight: '600',
-                    marginBottom: 5,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 2,
                   }}>
-                  {index + 1}. {member.name}, Amount: {member.amount}
-                </Text>
+                  <Text
+                    key={member._id}
+                    style={{
+                      color: '#777777',
+                      fontSize: 12,
+                      fontWeight: '600',
+                    }}>
+                    {index + 1}. {member.name}, Amount: {member.amount}
+                  </Text>
+
+                  {!showHideButtons && showUploadImageButton && (
+                    <TouchableOpacity
+                      key={`button-${member._id}`}
+                      style={{
+                        paddingVertical: 5,
+                        paddingHorizontal: 10,
+                        backgroundColor: 'rgba(0, 133, 255, 0.4)',
+                        marginBottom: 5,
+                        borderRadius: 15,
+                      }}
+                      onPress={() => {
+                        handlePresentModalForMoney(member._id);
+                      }}>
+                      <Text
+                        key="button-name"
+                        style={{
+                          color: '#000',
+                          fontSize: 12,
+                          fontWeight: '600',
+                        }}>
+                        Add money
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               ))
             ) : (
-              <Text>No members found</Text>
+              <Text key="no-member">No members found</Text>
             )}
           </View>
 
+          {/* Total Calculation Portion */}
           <View
             style={{
               width: windowWidth - 40,
@@ -933,14 +998,22 @@ const DetailsTripScreen = ({navigation}) => {
           </View>
         </ScrollView>
 
+        {/* Plus Icon Functionality */}
         {showHideButtons && (
           <View
             style={{
               position: 'absolute',
-              bottom: 100,
+              bottom: 90,
               right: 40,
+              width: 120,
+              padding: 5,
               backgroundColor: 'transparent',
+              shadowOffset: {width: 0, height: 2},
+              shadowColor: '#000',
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
             }}>
+            {/* Inside Plus Icon Add Expenses Function */}
             <TouchableOpacity
               style={{
                 paddingHorizontal: 10,
@@ -949,12 +1022,7 @@ const DetailsTripScreen = ({navigation}) => {
                 borderRadius: 5,
                 justifyContent: 'center',
                 marginBottom: 10,
-                shadowOffset: {width: -2, height: 4},
-                shadowColor: '#000',
-                shadowOpacity: 0.2,
-                shadowRadius: 3,
                 flexDirection: 'row',
-                elevation: 2,
               }}
               onPress={() => {
                 handlePresentModalForExpenses();
@@ -972,6 +1040,7 @@ const DetailsTripScreen = ({navigation}) => {
               <MaterialIcons name="payments" size={16} color="#fff" />
             </TouchableOpacity>
 
+            {/* Inside Plus Icon Add Members Function */}
             <TouchableOpacity
               style={{
                 paddingHorizontal: 10,
@@ -980,12 +1049,7 @@ const DetailsTripScreen = ({navigation}) => {
                 borderRadius: 5,
                 justifyContent: 'center',
                 marginBottom: 10,
-                shadowOffset: {width: -2, height: 4},
-                shadowColor: '#000',
-                shadowOpacity: 0.2,
-                shadowRadius: 3,
                 flexDirection: 'row',
-                elevation: 2,
               }}
               onPress={() => {
                 handlePresentModalForMembers();
@@ -1006,6 +1070,7 @@ const DetailsTripScreen = ({navigation}) => {
           </View>
         )}
 
+        {/* Main Plus Icon */}
         {showUploadImageButton && (
           <TouchableOpacity
             style={{

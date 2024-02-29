@@ -79,7 +79,7 @@ async function getSingleTripDetails(req, res) {
   }
 }
 
-// Update single trip details functionality controller
+// Update single trip member add functionality controller
 async function updateTripDetails(req, res) {
   const {id} = req.params;
   const {newMembers} = req.body;
@@ -107,10 +107,77 @@ async function updateTripDetails(req, res) {
   }
 }
 
+//get Individual Member data in a trip controller
+
+async function getMemberDetailsById(req, res) {
+  const {tripId, memberId} = req.params;
+
+  try {
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({message: 'Trip not found'});
+    }
+
+    const member = trip.members.find(
+      member => member._id.toString() === memberId,
+    );
+    if (!member) {
+      return res.status(404).json({message: 'Member not found in the trip'});
+    }
+
+    res.json({member});
+  } catch (error) {
+    res
+      .status(500)
+      .json({message: 'Error retrieving member details', error: error.message});
+  }
+}
+
+//Update additional Money functionality controller
+async function updateAdditionalAmount(req, res) {
+  const {tripId, memberId} = req.params;
+  const {additionalAmount} = req.body;
+
+  try {
+    const trip = await Trip.findById(tripId);
+
+    if (!trip) {
+      return res.status(404).json({message: 'Trip not found'});
+    }
+
+    const member = trip.members.find(
+      member => member._id.toString() === memberId,
+    );
+
+    if (!member) {
+      return res.status(404).json({message: 'Member not found in the trip'});
+    }
+
+    // Remove null values from additionalAmounts array
+    member.additionalAmounts = member.additionalAmounts.filter(
+      amount => amount !== null,
+    );
+
+    member.additionalAmounts.push(additionalAmount);
+    await trip.save();
+
+    res.json({
+      message: 'Additional amount updated successfully',
+      updatedTrip: trip,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({message: 'Something went wrong', error: error.message});
+  }
+}
+
 module.exports = {
   createTrip,
   getTripDetails,
   getSingleTripDetails,
   getTripDetailsById,
   updateTripDetails,
+  getMemberDetailsById,
+  updateAdditionalAmount,
 };

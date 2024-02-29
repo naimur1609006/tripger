@@ -16,7 +16,6 @@ const authenticate = (req, res, next) => {
   //     message: 'authentication failed',
   //   });
   // }
-  console.log(req.headers);
 
   const {authorization} = req.headers;
 
@@ -27,7 +26,6 @@ const authenticate = (req, res, next) => {
   }
 
   const token = authorization;
-  console.log(token);
 
   jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
     if (err) {

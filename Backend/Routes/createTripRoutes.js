@@ -8,6 +8,8 @@ const {
   getSingleTripDetails,
   getTripDetailsById,
   updateTripDetails,
+  updateAdditionalAmount,
+  getMemberDetailsById,
 } = require('../Controllers/createTripController.js');
 
 //Create Trip Route
@@ -22,7 +24,17 @@ route.get('/getAllTripsById/:userId', authenticate, getTripDetailsById);
 //get single trip route
 route.get('/getSingleTrip/:id', authenticate, getSingleTripDetails);
 
-// update single trip details route
-route.patch('/updateSingleTrip/:id', authenticate, updateTripDetails);
+// update add member in a trip route
+route.patch('/updateSingleTrip/addMember/:id', authenticate, updateTripDetails);
+
+//Get Single Member Details in a trip route
+route.get('/:tripId/members/:memberId', authenticate, getMemberDetailsById);
+
+//update Additional amount of member route
+route.patch(
+  '/additional-amount/:tripId/members/:memberId',
+  authenticate,
+  updateAdditionalAmount,
+);
 
 module.exports = route;
