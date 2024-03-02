@@ -14,6 +14,7 @@ import HomeScreen from '../../screens/HomeScreen';
 import Createtrip from '../../screens/CreatetripScreen';
 import AllTripsScreen from '../../screens/AllTripsScreen';
 import DetailsTripScreen from '../../screens/DetailsTripScreen';
+import TripCostScreen from '../../screens/TripCostScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -42,6 +43,12 @@ const HomeStack = () => {
       <Stack.Screen
         name="SingleTripView"
         component={DetailsTripScreen}
+        options={{headerShown: false}}
+      />
+
+      <Stack.Screen
+        name="TripCost"
+        component={TripCostScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

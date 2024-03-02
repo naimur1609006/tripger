@@ -27,7 +27,6 @@ const HomeScreen = ({navigation}) => {
   const {userToken, userInfo} = useContext(AuthContext);
 
   const [searchinfo, setSearchInfo] = useState('');
-  const [memberId, setMemberId] = useState('');
 
   const [allTrips, setAllTrips] = useState(1);
 

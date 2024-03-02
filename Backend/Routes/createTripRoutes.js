@@ -10,6 +10,11 @@ const {
   updateTripDetails,
   updateAdditionalAmount,
   getMemberDetailsById,
+  updateMemberName,
+  deleteMemberById,
+  updateTripCosts,
+  getTripCosts,
+  getAllMembers,
 } = require('../Controllers/createTripController.js');
 
 //Create Trip Route
@@ -36,5 +41,24 @@ route.patch(
   authenticate,
   updateAdditionalAmount,
 );
+
+//update Additional amount of member route
+route.patch(
+  '/additional-amount/:tripId/members/:memberId',
+  authenticate,
+  updateMemberName,
+);
+
+//get All Members in a trip route
+route.get('/:tripId/members', authenticate, getAllMembers);
+
+//delete individual member
+route.delete('/:tripId/members/:memberId', authenticate, deleteMemberById);
+
+//update trip costs
+route.patch('/:tripId/costs', authenticate, updateTripCosts);
+
+// get all trip costs
+route.get('/:tripId/costs', authenticate, getTripCosts);
 
 module.exports = route;

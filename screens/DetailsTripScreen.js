@@ -23,14 +23,18 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import NatureImage from '../assets/images/thirdSliderImage.jpeg';
 import ExpenseOptions from '../assets/components/ExpenseOptions';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useFocusEffect} from '@react-navigation/native';
 
 const DetailsTripScreen = ({navigation}) => {
   const route = useRoute();
+  console.log(route.params.trips_id);
 
   const {userToken} = useContext(AuthContext);
 
+  const [tripid, setTripId] = useState(null);
+
   const [singleTripDetails, setSingleTripDetails] = useState('');
+  const [memberId, setMemberId] = useState(null);
+  const [totalMoney, setTotalMoney] = useState(0);
 
   const [individualMemberDetails, setIndividualMemberDetails] = useState(null);
 
@@ -109,7 +113,6 @@ const DetailsTripScreen = ({navigation}) => {
           },
         },
       );
-      console.log(response.data.member);
       setIndividualMemberDetails(response.data.member);
     } catch (error) {
       console.log(error, 'in handle money bottom sheet');
@@ -131,7 +134,7 @@ const DetailsTripScreen = ({navigation}) => {
           },
         },
       );
-
+      setTripId(response.data.Single_Trip._id);
       setSingleTripDetails(response.data.Single_Trip);
     } catch (error) {
       console.log(`Single trip Details Error: ${error}`);
@@ -211,12 +214,12 @@ const DetailsTripScreen = ({navigation}) => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleAddExpense = () => {
-    // Implement logic to handle adding expense
-    console.log('Selected category:', selectedCategory);
-    console.log('Amount:', amount);
-    console.log('Description:', description);
-  };
+  // const handleAddExpense = () => {
+  //   // Implement logic to handle adding expense
+  //   console.log('Selected category:', selectedCategory);
+  //   console.log('Amount:', amount);
+  //   console.log('Description:', description);
+  // };
 
   //Dynamic Text Fields for Member List
   const [textFields, setTextFields] = useState([
@@ -287,6 +290,109 @@ const DetailsTripScreen = ({navigation}) => {
       handleCloseModalForMembers();
     } catch (error) {
       console.error('Error updating trip details:', error);
+    }
+  };
+
+  //handle update additional money function
+  const [additionalAmount, setAdditionalAmount] = useState('');
+
+  const handleAddMoney = async () => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:8080/api/trip//additional-amount/${route.params.trips_id}/members/${memberId}`,
+        {additionalAmount},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+
+      console.log(response.data.updatedTrip);
+
+      setSingleTripDetails(response.data.updatedTrip);
+
+      setAdditionalAmount('');
+
+      handleCloseModalForMoney();
+    } catch (error) {
+      console.error('Error adding additional amount:', error);
+      // You can handle errors, e.g., show an error message to the user
+    }
+  };
+
+  // Initialize totalAmount variable
+  let totalAmount = 0;
+
+  useEffect(() => {
+    // Calculate total amount when tripDetails updates
+    if (singleTripDetails) {
+      let total = 0;
+      singleTripDetails.members.forEach(member => {
+        total += member.amount; // Add base amount
+        if (member.additionalAmounts.length > 0) {
+          total += member.additionalAmounts.reduce(
+            (acc, curr) => acc + curr,
+            0,
+          ); // Add additional amounts
+        }
+      });
+      setTotalMoney(total);
+    }
+  }, [singleTripDetails]);
+
+  //delete member by Id
+  const handleDeleteMember = async () => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8080/api/trip/${route.params.trips_id}/members/${memberId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+
+      if (singleTripDetails && singleTripDetails.members) {
+        setSingleTripDetails(prevTripDetails => ({
+          ...prevTripDetails,
+          members: prevTripDetails.members.filter(
+            member => member._id !== memberId,
+          ),
+        }));
+      }
+      handleCloseModalForMoney();
+    } catch (error) {
+      console.error('Error deleting member:', error);
+    }
+  };
+
+  // Update trip costs
+
+  const handleAddExpense = async () => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:8080/api/trip/${route.params.trips_id}/costs`,
+        {
+          category: selectedCategory,
+          amount: amount,
+          description: description,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+      setAmount('');
+      setDescription('');
+
+      handleCloseModalForExpenses();
+    } catch (error) {
+      console.error('Error adding expense:', error);
     }
   };
 
@@ -389,6 +495,19 @@ const DetailsTripScreen = ({navigation}) => {
             </TouchableOpacity>
           </View>
 
+          {errorMessage ? (
+            <Text
+              style={{
+                color: 'red',
+                fontSize: 12,
+                fontWeight: '800',
+                alignSelf: 'center',
+                marginTop: 20,
+              }}>
+              {errorMessage}
+            </Text>
+          ) : null}
+
           <ScrollView>
             <View style={{marginTop: 10}}>
               <ExpenseOptions
@@ -416,6 +535,7 @@ const DetailsTripScreen = ({navigation}) => {
                   value={amount}
                   style={{fontSize: 12}}
                   onChangeText={text => setAmount(text)}
+                  onPressIn={() => setErrorMessage(null)}
                 />
               </View>
 
@@ -443,6 +563,7 @@ const DetailsTripScreen = ({navigation}) => {
                   value={description}
                   style={{fontSize: 12}}
                   onChangeText={text => setDescription(text)}
+                  onPressIn={() => setErrorMessage(null)}
                 />
               </View>
             </View>
@@ -455,7 +576,13 @@ const DetailsTripScreen = ({navigation}) => {
                 borderRadius: 20,
                 marginTop: 20,
               }}
-              onPress={handleAddExpense}>
+              onPress={() => {
+                if (amount === null || description === '') {
+                  setErrorMessage('All Fields must be Filled');
+                } else {
+                  handleAddExpense();
+                }
+              }}>
               <Text style={{fontSize: 12, fontWeight: '600', color: '#fff'}}>
                 Add Expense
               </Text>
@@ -628,6 +755,19 @@ const DetailsTripScreen = ({navigation}) => {
               </TouchableOpacity>
             </View>
 
+            {errorMessage ? (
+              <Text
+                style={{
+                  color: 'red',
+                  fontSize: 12,
+                  fontWeight: '800',
+                  alignSelf: 'center',
+                  marginTop: 20,
+                }}>
+                {errorMessage}
+              </Text>
+            ) : null}
+
             {individualMemberDetails && (
               <View
                 style={{
@@ -679,7 +819,7 @@ const DetailsTripScreen = ({navigation}) => {
                     }}>
                     <FontAwesome name="money" size={17} color={'#0085FF'} />
                     <TextInput
-                      value={''}
+                      value={additionalAmount}
                       placeholder="Add Money"
                       style={{
                         fontSize: 14,
@@ -687,9 +827,8 @@ const DetailsTripScreen = ({navigation}) => {
                         color: '#000',
                         fontWeight: '700',
                       }}
-                      onChangeText={text => {
-                        // Handle text change if needed
-                      }}
+                      onChangeText={setAdditionalAmount}
+                      onPressIn={() => setErrorMessage(null)}
                     />
                   </View>
                 </View>
@@ -705,11 +844,48 @@ const DetailsTripScreen = ({navigation}) => {
                 borderRadius: 20,
                 marginTop: 20,
               }}
-              onPress={() => {}}>
+              onPress={() => {
+                if (additionalAmount === '') {
+                  setErrorMessage('Field is empty');
+                } else {
+                  handleAddMoney();
+                }
+              }}>
               <Text style={{fontSize: 12, fontWeight: '600', color: '#fff'}}>
                 Add Money
               </Text>
             </TouchableOpacity>
+
+            <View
+              style={{
+                width: windowWidth - 40,
+                height: 150,
+                marginHorizontal: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '700',
+                }}>
+                If you want to delete this member, Click on the button..
+              </Text>
+
+              <TouchableOpacity
+                style={{
+                  alignSelf: 'center',
+                  backgroundColor: 'red',
+                  padding: 5,
+                  borderRadius: 10,
+                  marginTop: 15,
+                }}
+                onPress={handleDeleteMember}>
+                <Text style={{fontSize: 12, fontWeight: '700', color: '#fff'}}>
+                  Delete member
+                </Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </BottomSheetModal>
 
@@ -883,51 +1059,62 @@ const DetailsTripScreen = ({navigation}) => {
 
             {singleTripDetails.members &&
             singleTripDetails.members.length > 0 ? (
-              singleTripDetails.members.map((member, index) => (
-                <View
-                  key={member._id}
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: 2,
-                  }}>
-                  <Text
+              singleTripDetails.members.map((member, index) => {
+                const memberTotalAmount =
+                  member.amount +
+                  member.additionalAmounts.reduce((acc, curr) => acc + curr, 0);
+                // setIndividualMemberBalance(memberTotalAmount);
+                totalAmount += memberTotalAmount;
+
+                return (
+                  <View
                     key={member._id}
                     style={{
-                      color: '#777777',
-                      fontSize: 12,
-                      fontWeight: '600',
+                      flex: 1,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingVertical: 2,
                     }}>
-                    {index + 1}. {member.name}, Amount: {member.amount}
-                  </Text>
-
-                  {!showHideButtons && showUploadImageButton && (
-                    <TouchableOpacity
-                      key={`button-${member._id}`}
+                    <Text
                       style={{
-                        paddingVertical: 5,
-                        paddingHorizontal: 10,
-                        backgroundColor: 'rgba(0, 133, 255, 0.4)',
-                        marginBottom: 5,
-                        borderRadius: 15,
-                      }}
-                      onPress={() => {
-                        handlePresentModalForMoney(member._id);
+                        width: '70%',
+                        flex: 1,
+                        color: '#777777',
+                        fontSize: 12,
+                        fontWeight: '600',
                       }}>
-                      <Text
-                        key="button-name"
+                      {index + 1}. {member.name}, Amount: {memberTotalAmount}
+                    </Text>
+
+                    {showUploadImageButton && !showHideButtons && (
+                      <TouchableOpacity
+                        key={`button-${member._id}`}
                         style={{
-                          color: '#000',
-                          fontSize: 12,
-                          fontWeight: '600',
+                          width: '29%',
+                          paddingVertical: 5,
+                          paddingHorizontal: 10,
+                          backgroundColor: 'rgba(0, 133, 255, 0.4)',
+                          marginBottom: 5,
+                          borderRadius: 15,
+                        }}
+                        onPress={() => {
+                          handlePresentModalForMoney(member._id);
+                          setMemberId(member._id);
                         }}>
-                        Add money
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))
+                        <Text
+                          style={{
+                            color: '#000',
+                            fontSize: 12,
+                            fontWeight: '600',
+                          }}>
+                          Add money
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              })
             ) : (
               <Text key="no-member">No members found</Text>
             )}
@@ -988,14 +1175,41 @@ const DetailsTripScreen = ({navigation}) => {
                     fontSize: 12,
                     fontWeight: '600',
                   }}>
-                  Total Amount:{' '}
-                  {singleTripDetails.members.reduce(
-                    (total, member) => total + member.amount,
-                    0,
-                  )}
+                  Total Amount:{totalMoney}
                 </Text>
               )}
           </View>
+
+          <TouchableOpacity
+            style={{
+              width: windowWidth - 40,
+              marginHorizontal: 20,
+              borderRadius: 10,
+              backgroundColor: isOpen ? 'rgba(255,255,255,0.5)' : '#ffffff',
+              shadowOffset: {width: -2, height: 2},
+              shadowColor: '#000',
+              shadowOpacity: 0.1,
+              shadowRadius: 3,
+              paddingVertical: 10,
+              paddingHorizontal: 15,
+              marginTop: 10,
+            }}
+            onPress={() => {
+              if (tripid) {
+                navigation.navigate('TripCost', {
+                  trip_id: tripid,
+                });
+              }
+            }}>
+            <Text
+              style={{
+                color: '#0085FF',
+                fontSize: 13,
+                fontWeight: '800',
+              }}>
+              Trip Cost Summary ===
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
 
         {/* Plus Icon Functionality */}

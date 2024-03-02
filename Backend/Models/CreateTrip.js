@@ -52,6 +52,13 @@ const TripSchema = new Schema(
       required: true,
       default: 'user',
     },
+    costs: [
+      {
+        category: String,
+        amount: Number,
+        description: String,
+      },
+    ],
   },
   {timestamps: true},
 );

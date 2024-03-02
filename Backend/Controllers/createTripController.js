@@ -172,6 +172,122 @@ async function updateAdditionalAmount(req, res) {
   }
 }
 
+//update member name functionality controller
+async function updateMemberName(req, res) {
+  const {tripId, memberId} = req.params;
+  const {newName} = req.body;
+
+  try {
+    const trip = await Trip.findById(tripId);
+
+    if (!trip) {
+      return res.status(404).json({message: 'Trip not found'});
+    }
+
+    const member = trip.members.find(
+      member => member._id.toString() === memberId,
+    );
+
+    if (!member) {
+      return res.status(404).json({message: 'Member not found in the trip'});
+    }
+
+    member.name = newName; // Update member's name
+    await trip.save();
+
+    res.json({
+      message: 'Member name updated successfully',
+      updatedMember: member,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({message: 'Something went wrong', error: error.message});
+  }
+}
+
+//delete individual Member
+async function deleteMemberById(req, res) {
+  const {tripId, memberId} = req.params;
+
+  try {
+    const trip = await Trip.findById(tripId);
+
+    if (!trip) {
+      return res.status(404).json({message: 'Trip not found'});
+    }
+
+    // Remove the member from the trip
+    trip.members = trip.members.filter(
+      member => member._id.toString() !== memberId,
+    );
+
+    await trip.save();
+
+    res.json({message: 'Member deleted successfully', updatedTrip: trip});
+  } catch (error) {
+    console.error('Error deleting member:', error);
+    res
+      .status(500)
+      .json({message: 'Something went wrong', error: error.message});
+  }
+}
+
+//Update cost details
+
+const updateTripCosts = async (req, res) => {
+  const {tripId} = req.params;
+  const {category, amount, description} = req.body;
+
+  try {
+    const trip = await Trip.findById(tripId);
+
+    if (!trip) {
+      return res.status(404).json({message: 'Trip not found'});
+    }
+    trip.costs.push({category, amount, description});
+    await trip.save();
+    res.status(200).json({message: 'Cost added successfully', trip});
+  } catch (error) {
+    console.error('Error updating trip costs:', error);
+    res.status(500).json({message: 'Failed to update trip costs'});
+  }
+};
+
+//get Cost Details Function
+const getTripCosts = async (req, res) => {
+  const {tripId} = req.params;
+
+  try {
+    const trip = await Trip.findById(tripId);
+
+    if (!trip) {
+      return res.status(404).json({message: 'Trip not found'});
+    }
+    res.status(200).json({costs: trip.costs});
+  } catch (error) {
+    console.error('Error fetching trip costs:', error);
+    res.status(500).json({message: 'Failed to fetch trip costs'});
+  }
+};
+
+//get All members in a trip controller function
+async function getAllMembers(req, res) {
+  const {tripId} = req.params;
+
+  try {
+    const trip = await Trip.findById(tripId);
+
+    if (!trip) {
+      return res.status(404).json({message: 'Trip not found'});
+    }
+    res.json(trip.members);
+  } catch (error) {
+    console.error('Error fetching members:', error);
+    res.status(500).json({message: 'Failed to fetch members'});
+  }
+}
+
 module.exports = {
   createTrip,
   getTripDetails,
@@ -180,4 +296,9 @@ module.exports = {
   updateTripDetails,
   getMemberDetailsById,
   updateAdditionalAmount,
+  updateMemberName,
+  deleteMemberById,
+  updateTripCosts,
+  getTripCosts,
+  getAllMembers,
 };
