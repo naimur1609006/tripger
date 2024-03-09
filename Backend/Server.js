@@ -7,6 +7,8 @@ const requireToken = require('./Middlewares/AuthTokenRequired.js');
 const createTripRoute = require('./Routes/createTripRoutes');
 
 app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+app.use('/upload', express.static('upload'));
 
 dotenv.config();
 require('./db');

@@ -1,6 +1,8 @@
 const User = require('../Models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
 
 const nodemailer = require('nodemailer');
 
@@ -113,7 +115,6 @@ async function getAllUsers(req, res) {
 //getSingleUser functionality controller
 async function getSingleUser(req, res) {
   const {id} = req.params;
-  console.log(id);
   try {
     const singleUser = await User.findById(id);
     return res.json({
@@ -124,6 +125,85 @@ async function getSingleUser(req, res) {
     return res.json({error});
   }
 }
+
+// Define Multer storage configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'upload/profileImage');
+  },
+  filename: function (req, file, cb) {
+    const userId = req.params.id;
+    const date = Date.now();
+    const originalName = file.originalname;
+    const filename = `${userId}-${date}-${originalName}`;
+    cb(null, filename);
+  },
+});
+
+// Create Multer instance
+const upload = multer({storage: storage});
+const uploadMiddleware = upload.single('profileImage');
+
+//Upload profile image functionality controller
+async function uploadProfileImage(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({error: 'No file uploaded'});
+    }
+
+    const userId = req.params.id;
+    const profileImagePath = req.file.path;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {profileImage: profileImagePath},
+      {new: true},
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({error: 'User not found'});
+    }
+
+    res.status(200).json({
+      message: 'Profile image uploaded successfully',
+      user: updatedUser.profileImage,
+    });
+  } catch (error) {
+    console.error('Error uploading profile image:', error);
+    res.status(500).json({error: 'Internal server error'});
+  }
+}
+
+//get Profile Image functionality
+const getProfileImage = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({error: 'User not found'});
+    }
+
+    if (!user.profileImage) {
+      console.log('no image');
+      // If user doesn't have a profile image, return a default image URL
+      return res.status(200).json({
+        message: 'no image uploaded',
+      });
+    } else {
+      // const imagePath = path.join(__dirname, '..', '.', user.profileImage);
+
+      // res.sendFile(imagePath);
+      return res.json({
+        message: 'image already uploaded',
+        image: user.profileImage,
+      });
+    }
+  } catch (error) {
+    console.error('Error retrieving user profile image:', error);
+    res.status(500).json({error: 'Internal server error'});
+  }
+};
 
 //Update user functionality controller
 async function updateUser(req, res) {
@@ -165,7 +245,6 @@ async function loginUser(req, res) {
   }
 
   const savedUser = await User.findOne({email: email});
-  // console.log(savedUser._id.toHexString());
 
   if (!savedUser) {
     return res.json({
@@ -178,7 +257,6 @@ async function loginUser(req, res) {
       if (result) {
         console.log('password matched');
         const token = jwt.sign({_id: savedUser._id}, process.env.JWT_SECRET);
-        // console.log(token);
         res.send({
           message: 'User LogIn Successful',
           token,
@@ -204,4 +282,7 @@ module.exports = {
   updateUser,
   deleteUser,
   loginUser,
+  uploadProfileImage,
+  getProfileImage,
+  uploadMiddleware,
 };

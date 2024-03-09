@@ -26,7 +26,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
 const DetailsTripScreen = ({navigation}) => {
   const route = useRoute();
-  console.log(route.params.trips_id);
+  // console.log(route.params.trips_id);
 
   const {userToken} = useContext(AuthContext);
 
@@ -40,7 +40,8 @@ const DetailsTripScreen = ({navigation}) => {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const DEFAULT_IMAGE = Image.resolveAssetSource(NatureImage).uri;
+  const DEFAULT_IMAGE =
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO58GTfinMVl3rGnFyh5tX1yoBQIVzqoLduw&usqp=CAU';
   const [image, setImage] = useState(DEFAULT_IMAGE);
 
   const [showHideButtons, setShowHideButtons] = useState(false);
@@ -153,27 +154,67 @@ const DetailsTripScreen = ({navigation}) => {
       cropping: true,
     }).then(image => {
       console.log(image);
-      setImage(image.path);
       handleCloseModalForCamera();
     });
   };
 
   const choosePhotoFromLibrary = async () => {
     try {
-      await ImagePicker.openPicker({
+      const image = await ImagePicker.openPicker({
         width: 300,
-        height: 300,
-        borderRadius: 150,
+        height: 150,
         cropping: true,
-      }).then(image => {
-        console.log(image.path);
-        setImage(image.path);
-        handleCloseModalForCamera();
       });
+      const formData = new FormData();
+      formData.append('tripsImage', {
+        uri: image.path,
+        type: image.mime,
+        name: image.path.split('/').pop(),
+      });
+      const response = await axios.patch(
+        `http://localhost:8080/api/trip/updateTrip/${route.params.trips_id}/tripsImage`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: userToken,
+          },
+        },
+      );
+      console.log(response.data.trip);
+      fetchTripsImage();
+      handleCloseModalForCamera();
     } catch (error) {
-      console.log(error);
+      console.log('Error selecting image:', error);
     }
   };
+
+  const fetchTripsImage = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/trip/tripsImage/${route.params.trips_id}`,
+        {
+          headers: {
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+      if (response.data.image) {
+        const imageUrl = response.data.image;
+        setImage(imageUrl);
+      } else {
+        setImage(DEFAULT_IMAGE);
+      }
+    } catch (error) {
+      console.error('Error fetching profile image:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTripsImage();
+  }, []);
+
+  // console.log(image);
 
   //For Camera and Library Bottom Sheet
   const snapPointsForCamera = ['22%'];
@@ -213,13 +254,6 @@ const DetailsTripScreen = ({navigation}) => {
   );
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-
-  // const handleAddExpense = () => {
-  //   // Implement logic to handle adding expense
-  //   console.log('Selected category:', selectedCategory);
-  //   console.log('Amount:', amount);
-  //   console.log('Description:', description);
-  // };
 
   //Dynamic Text Fields for Member List
   const [textFields, setTextFields] = useState([
@@ -930,11 +964,24 @@ const DetailsTripScreen = ({navigation}) => {
               shadowRadius: 3,
               marginTop: 5,
             }}>
-            <Image
-              source={{uri: image}}
-              resizeMode="cover"
-              style={{width: windowWidth - 40, height: 150, borderRadius: 10}}
-            />
+            {image ===
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO58GTfinMVl3rGnFyh5tX1yoBQIVzqoLduw&usqp=CAU' ? (
+              <Image
+                source={{uri: image}}
+                resizeMode="contain"
+                style={{
+                  width: windowWidth - 40,
+                  height: 150,
+                  borderRadius: 10,
+                }}
+              />
+            ) : (
+              <Image
+                source={{uri: `http://localhost:8080/${image}`}}
+                resizeMode="cover"
+                style={{width: windowWidth - 40, height: 150, borderRadius: 10}}
+              />
+            )}
 
             {showUploadImageButton && (
               <TouchableOpacity

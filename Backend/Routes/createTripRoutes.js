@@ -15,6 +15,9 @@ const {
   updateTripCosts,
   getTripCosts,
   getAllMembers,
+  uploadTripsImage,
+  getTripImage,
+  uploadMiddleware,
 } = require('../Controllers/createTripController.js');
 
 //Create Trip Route
@@ -60,5 +63,16 @@ route.patch('/:tripId/costs', authenticate, updateTripCosts);
 
 // get all trip costs
 route.get('/:tripId/costs', authenticate, getTripCosts);
+
+//update user profile image route
+route.patch(
+  '/updateTrip/:id/tripsImage',
+  authenticate,
+  uploadMiddleware,
+  uploadTripsImage,
+);
+
+//get Profile image route
+route.get('/tripsImage/:id', authenticate, getTripImage);
 
 module.exports = route;

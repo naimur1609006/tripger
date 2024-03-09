@@ -35,7 +35,7 @@ const ProfileScreen = ({navigation}) => {
   const [profession, setProfession] = useState('');
   const [workplace, setWorkplace] = useState('');
 
-  const [image, setImage] = useState(DEFAULT_IMAGE);
+  const [image, setImage] = useState(null);
 
   const getUserData = async userToken => {
     try {
@@ -90,18 +90,36 @@ const ProfileScreen = ({navigation}) => {
 
   const choosePhotoFromLibrary = async () => {
     try {
-      await ImagePicker.openPicker({
+      const image = await ImagePicker.openPicker({
         width: 300,
         height: 300,
-        borderRadius: 150,
         cropping: true,
-      }).then(image => {
-        console.log(image.path);
-        setImage(image.path);
-        handleCloseModalForCamera();
       });
+
+      const formData = new FormData();
+      formData.append('profileImage', {
+        uri: image.path,
+        type: image.mime,
+        name: image.path.split('/').pop(),
+      });
+
+      const response = await axios.patch(
+        `http://localhost:8080/api/user/updateUser/${userInfo.savedUser._id}/profileImage`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: userToken,
+          },
+        },
+      );
+
+      //console.log(response.data);
+
+      fetchProfileImage();
+      handleCloseModalForCamera();
     } catch (error) {
-      console.log(error);
+      console.log('Error selecting image:', error);
     }
   };
 
@@ -131,6 +149,31 @@ const ProfileScreen = ({navigation}) => {
     bottomSheetModalRef2.current?.close();
     setIsOpen(false);
   }
+
+  const fetchProfileImage = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/user/profileImage/${userInfo.savedUser._id}`,
+        {
+          headers: {
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+      if (response.data.image) {
+        const imageUrl = response.data.image;
+        setImage(imageUrl);
+      } else {
+        setImage(DEFAULT_IMAGE);
+      }
+    } catch (error) {
+      console.error('Error fetching profile image:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileImage();
+  }, []);
 
   return (
     <BottomSheetModalProvider>
@@ -566,16 +609,30 @@ const ProfileScreen = ({navigation}) => {
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
-              <Image
-                source={{uri: image}}
-                style={{
-                  width: 130,
-                  height: 130,
-                  borderRadius: 65,
-                  position: 'absolute',
-                }}
-              />
-
+              {image ===
+              'http://localhost:8081/assets/assets/images/userIcon.png?platform=ios&hash=6f6bbb16aec97391aefe120ec5a4e6a2' ? (
+                <Image
+                  source={{uri: image}}
+                  style={{
+                    width: 130,
+                    height: 130,
+                    borderRadius: 65,
+                    position: 'absolute',
+                  }}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Image
+                  source={{uri: `http://localhost:8080/${image}`}}
+                  style={{
+                    width: 130,
+                    height: 130,
+                    borderRadius: 65,
+                    position: 'absolute',
+                  }}
+                  resizeMode="contain"
+                />
+              )}
               <View
                 style={{
                   width: 40,

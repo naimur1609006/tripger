@@ -18,6 +18,7 @@ import {BottomSheetModal, BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import CalendarPicker from 'react-native-calendar-picker';
 import {AuthContext} from '../assets/context/AuthContext';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreatetripScreen = ({navigation}) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -139,7 +140,7 @@ const CreatetripScreen = ({navigation}) => {
         },
       );
 
-      console.log('Create Trip API Response:', response.data);
+      await AsyncStorage.setItem('tripId', response.data.tripDetails._id);
       navigation.navigate('Home2');
     } catch (error) {
       console.error('Error creating trip:', error);

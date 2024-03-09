@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity, Alert} from 'react-native';
+import {View, Text, TouchableOpacity, Image} from 'react-native';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import React, {useContext, useEffect, useState} from 'react';
 import {
@@ -7,17 +7,19 @@ import {
 } from '@react-navigation/drawer';
 import {windowWidth} from '../utils/dimension';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
-import {useRoute} from '@react-navigation/native';
 import {AuthContext} from '../context/AuthContext';
 import axios from 'axios';
+import userIconImage from '../images/userIcon.png';
+import {useIsFocused} from '@react-navigation/native';
 
 const CustomDrawer = props => {
-  const {logout, userInfo, updatedUser, userToken} = useContext(AuthContext);
+  const {logout, userInfo, userToken} = useContext(AuthContext);
+  const DEFAULT_IMAGE = Image.resolveAssetSource(userIconImage).uri;
+  const isFocused = useIsFocused();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [image, setImage] = useState(null);
 
   const getUserData = async userToken => {
     try {
@@ -51,6 +53,31 @@ const CustomDrawer = props => {
     getUserData(userToken);
   });
 
+  const fetchProfileImage = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/user/profileImage/${userInfo.savedUser._id}`,
+        {
+          headers: {
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+      if (response.data.image) {
+        const imageUrl = response.data.image;
+        setImage(imageUrl);
+      } else {
+        setImage(DEFAULT_IMAGE);
+      }
+    } catch (error) {
+      console.error('Error fetching profile image:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileImage();
+  });
+
   return (
     <View style={{flex: 1, backgroundColor: '#0085FF'}}>
       <DrawerContentScrollView
@@ -58,15 +85,34 @@ const CustomDrawer = props => {
         contentContainerStyle={{
           backgroundColor: '#0085FF',
         }}>
-        <TouchableOpacity
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            flex: 1,
-            marginTop: 15,
-          }}>
-          <MaterialIcon name="supervised-user-circle" color="#fff" size={40} />
-        </TouchableOpacity>
+        {image ===
+        'http://localhost:8081/assets/assets/images/userIcon.png?platform=ios&hash=6f6bbb16aec97391aefe120ec5a4e6a2' ? (
+          <Image
+            source={{uri: image}}
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              alignSelf: 'center',
+              marginTop: 20,
+              marginBottom: 10,
+            }}
+            resizeMode="contain"
+          />
+        ) : (
+          <Image
+            source={{uri: `http://localhost:8080/${image}`}}
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              alignSelf: 'center',
+              marginTop: 20,
+              marginBottom: 10,
+            }}
+            resizeMode="contain"
+          />
+        )}
 
         <View
           style={{
@@ -149,15 +195,6 @@ const CustomDrawer = props => {
               Logout
             </Text>
           </TouchableOpacity>
-
-          {/* Test Purpose */}
-          {/* <TouchableOpacity
-            style={{with: 40, height: 40}}
-            onPress={() => {
-              getToken();
-            }}>
-            <Text>Get Data</Text>
-          </TouchableOpacity> */}
         </View>
       </DrawerContentScrollView>
     </View>

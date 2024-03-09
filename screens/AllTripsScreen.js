@@ -16,9 +16,12 @@ import axios from 'axios';
 import TripCard from '../assets/components/TripCard';
 import CustomSwitch2 from '../assets/components/CustomSwitch2';
 import Entypo from 'react-native-vector-icons/Entypo';
+import {useFocusEffect} from '@react-navigation/native';
 
 const AllTripsScreen = ({navigation}) => {
   const {userToken, userInfo} = useContext(AuthContext);
+  const DEFAULT_IMAGE =
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO58GTfinMVl3rGnFyh5tX1yoBQIVzqoLduw&usqp=CAU';
 
   const [switchState, setSwitchState] = useState(1);
 
@@ -55,8 +58,6 @@ const AllTripsScreen = ({navigation}) => {
     fetchData();
   }, []);
 
-  // const {startDate, endDate, ...rest} = trip;
-
   // Convert date strings to Date objects and categorize trips
   const categorizeTrips = tripsData => {
     const currentDate = new Date();
@@ -69,41 +70,29 @@ const AllTripsScreen = ({navigation}) => {
       const [day, month, year] = startDate.split('/');
       const startingdateString = `${year}-${month}-${day}`;
       const startDateTime = new Date(startingdateString);
-      // console.log(startDateTime, 'startDate');
-      // console.log(currentDate, 'currentDate');
 
       const [day1, month1, year1] = endDate.split('/');
       const endingDateString = `${year1}-${month1}-${day1} 23:59:59`;
       const endDateTime = new Date(endingDateString);
-      // console.log(endDateTime, 'endDate');
 
       if (startDateTime <= currentDate && endDateTime >= currentDate) {
         ongoingTrips.push({
           ...rest,
           startDate,
           endDate,
-          // startDate: startDateTime,
-          // endDate: endDateTime,
         });
-        // console.log(ongoingTrips, 'ongoing');
       } else if (startDateTime > currentDate) {
         upcomingTrips.push({
           ...rest,
           startDate,
           endDate,
-          // startDate: startDateTime,
-          // endDate: endDateTime,
         });
-        // console.log(upcomingTrips, 'upcoming');
       } else {
         pastTrips.push({
           ...rest,
           startDate,
           endDate,
-          // startDate: startDateTime,
-          // endDate: endDateTime,
         });
-        // console.log(pastTrips, 'past');
       }
     });
 
@@ -113,6 +102,56 @@ const AllTripsScreen = ({navigation}) => {
     pastTrips.sort((a, b) => b.endDate.localeCompare(a.endDate));
     return {ongoingTrips, upcomingTrips, pastTrips};
   };
+
+  const [tripImages, setTripImages] = useState({});
+  const getAllTripsByUserId = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/trip/getAllTripsById/${userInfo.savedUser._id}`,
+        {
+          headers: {
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+
+      // Map over each trip and fetch its image
+      await Promise.all(
+        response.data.All_Trips.map(async item => {
+          try {
+            const tripId = item._id;
+            const tripImageResponse = await axios.get(
+              `http://localhost:8080/api/trip/tripsImage/${tripId}`,
+              {
+                headers: {
+                  Authorization: `${userToken}`,
+                },
+              },
+            );
+
+            // Update tripImages state with the fetched image
+            if (tripImageResponse.data.image) {
+              setTripImages(prevState => ({
+                ...prevState,
+                [tripId]: tripImageResponse.data.image,
+              }));
+            }
+          } catch (error) {
+            console.log(error, 'image getting error for individual trip card');
+          }
+        }),
+      );
+    } catch (error) {
+      console.log(error, 'All trips Id getting problem');
+      return DEFAULT_IMAGE;
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getAllTripsByUserId();
+    }, []),
+  );
 
   const onSelectSwitch = value => {
     setSwitchState(value);
@@ -161,6 +200,8 @@ const AllTripsScreen = ({navigation}) => {
   };
 
   const renderItem = ({item}) => {
+    const tripId = item._id;
+    const tripImageUrl = tripImages[tripId] || DEFAULT_IMAGE;
     return (
       <TripCard
         cardViewStyle={{
@@ -191,7 +232,22 @@ const AllTripsScreen = ({navigation}) => {
           fontSize: 11,
           marginTop: 3,
           fontWeight: '600',
-        }}></TripCard>
+        }}>
+        {tripImageUrl ===
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO58GTfinMVl3rGnFyh5tX1yoBQIVzqoLduw&usqp=CAU' ? (
+          <Image
+            source={{uri: tripImageUrl}}
+            style={{width: 40, height: 40, borderRadius: 20}}
+            resizeMode="cover"
+          />
+        ) : (
+          <Image
+            source={{uri: `http://localhost:8080/${tripImageUrl}`}}
+            style={{width: 40, height: 40, borderRadius: 20}}
+            resizeMode="cover"
+          />
+        )}
+      </TripCard>
     );
   };
   return (

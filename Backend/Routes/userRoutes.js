@@ -7,6 +7,9 @@ const {
   deleteUser,
   verifyUser,
   loginUser,
+  uploadProfileImage,
+  uploadMiddleware,
+  getProfileImage,
 } = require('../Controllers/userController');
 
 const {authenticate, accessTo} = require('../Middlewares/AuthTokenRequired.js');
@@ -26,6 +29,17 @@ route.get('/getSingleUser/:id', authenticate, getSingleUser);
 
 //update user route
 route.patch('/updateUser/:id', authenticate, updateUser);
+
+//update user profile image route
+route.patch(
+  '/updateUser/:id/profileImage',
+  authenticate,
+  uploadMiddleware,
+  uploadProfileImage,
+);
+
+//get Profile image route
+route.get('/profileImage/:id', authenticate, getProfileImage);
 
 //delete user Route
 route.delete(

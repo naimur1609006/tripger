@@ -59,6 +59,9 @@ const TripSchema = new Schema(
         description: String,
       },
     ],
+    tripsImage: {
+      type: String,
+    },
   },
   {timestamps: true},
 );

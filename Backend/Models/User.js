@@ -47,6 +47,9 @@ const UserSchema = new Schema(
       required: true,
       default: 'user',
     },
+    profileImage: {
+      type: String, // Assuming you will store the file path
+    },
   },
   {timestamps: true},
 );

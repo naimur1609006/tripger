@@ -1,0 +1,42 @@
+// const fetchTripImages = async tripId => {
+  //   try {
+  //       `http://localhost:8080/api/trip/tripsImage/${tripId}`,
+  //       {
+  //         headers: {
+  //           Authorization: `${userToken}`,
+  //         },
+  //       },
+  //     );
+  //     if (response.status === 200) {
+  //       if (response.data.image) {
+  //         return response.data.image;
+  //       } else {
+  //         return DEFAULT_IMAGE;
+  //       }
+  //     } else {
+  //       console.error('Failed to fetch trip image:', response.status);
+  //       return DEFAULT_IMAGE;
+  //     }
+  //   } catch (error) {
+  //     if (error.response && error.response.status === 404) {
+  //       // Handle the case where the trip image is not found
+  //       console.log('No image found for trip');
+  //       return DEFAULT_IMAGE;
+  //     } else {
+  //       console.error('Error fetching trip image:', error);
+  //       return DEFAULT_IMAGE;
+  //     }
+  //   }
+  // };
+  // useEffect(() => {
+  //   if (isFocused && tripsId) {
+  //     const loadTripImages = async () => {
+  //       const tripImageUrl = await fetchTripImages(tripsId);
+  //       setTripImages(prevState => ({
+  //         ...prevState,
+  //         [tripsId]: tripImageUrl,
+  //       }));
+  //     };
+  //     loadTripImages();
+  //   }
+  // }, [isFocused, tripsId]);  const response = await axios.get(

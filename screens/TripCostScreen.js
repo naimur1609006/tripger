@@ -13,6 +13,7 @@ import {AuthContext} from '../assets/context/AuthContext';
 import {windowHeight, windowWidth} from '../assets/utils/dimension';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import {ScrollView} from 'react-native-gesture-handler';
+import {interpolate} from 'react-native-reanimated';
 
 const TripCostScreen = ({navigation}) => {
   const route = useRoute();
@@ -380,13 +381,14 @@ const TripCostScreen = ({navigation}) => {
                         }}>
                         {item.category}
                       </Text>
-                      <Text style={{width: '50%', fontSize: 12}}>
+                      <Text style={{width: '45%', fontSize: 12}}>
                         {item.description}
                       </Text>
                       <Text
                         style={{
-                          width: '10%',
+                          width: '15%',
                           fontSize: 12,
+                          textAlign: 'right',
                         }}>
                         {item.amount}
                       </Text>
@@ -463,18 +465,19 @@ const TripCostScreen = ({navigation}) => {
                         }}>
                         {item.totalAmount}
                       </Text>
-                      {item.balance !== undefined && ( // Check if item.balance exists
-                        <Text
-                          style={{
-                            width: '25%',
-                            fontSize: 12,
-                            color: item.balance < 0 ? 'red' : 'black',
-                            overflow: 'visible',
-                            textAlign: 'right',
-                          }}>
-                          {item.balance}
-                        </Text>
-                      )}
+                      <Text
+                        style={{
+                          width: '25%',
+                          fontSize: 12,
+                          color:
+                            item.totalAmount - costPerPerson < 0
+                              ? 'red'
+                              : 'black',
+                          overflow: 'visible',
+                          textAlign: 'right',
+                        }}>
+                        {(item.totalAmount - costPerPerson).toFixed(2)}
+                      </Text>
                     </View>
                   </View>
                 );

@@ -1,4 +1,5 @@
 const Trip = require('../Models/CreateTrip');
+const multer = require('multer');
 
 //Create Trip Functionality controller
 async function createTrip(req, res) {
@@ -288,6 +289,82 @@ async function getAllMembers(req, res) {
   }
 }
 
+// Define Multer storage configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'upload/tripsImage');
+  },
+  filename: function (req, file, cb) {
+    const tripId = req.params.id;
+    const date = Date.now();
+    const originalName = file.originalname;
+    const filename = `${tripId}-${date}-${originalName}`;
+    cb(null, filename);
+  },
+});
+
+// Create Multer instance
+const upload = multer({storage: storage});
+const uploadMiddleware = upload.single('tripsImage');
+
+//Upload profile image functionality controller
+async function uploadTripsImage(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({error: 'No file uploaded'});
+    }
+
+    const tripId = req.params.id;
+    const tripsImagePath = req.file.path;
+
+    const updatedTrip = await Trip.findByIdAndUpdate(
+      tripId,
+      {tripsImage: tripsImagePath},
+      {new: true},
+    );
+    //console.log(updatedTrip);
+
+    if (!updatedTrip) {
+      return res.status(404).json({error: 'Trip not found'});
+    }
+
+    res.status(200).json({
+      message: 'Trip image uploaded successfully',
+      trip: updatedTrip.tripsImage,
+    });
+  } catch (error) {
+    console.error('Error uploading trip image:', error);
+    res.status(500).json({error: 'Internal server error'});
+  }
+}
+
+//get Profile Image functionality
+const getTripImage = async (req, res) => {
+  try {
+    const tripId = req.params.id;
+
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({error: 'Trip not found'});
+    }
+
+    if (!trip.tripsImage) {
+      // If user doesn't have a profile image, return a default image URL
+      return res.status(200).json({
+        message: 'no image uploaded',
+      });
+    } else {
+      return res.json({
+        message: 'image already uploaded',
+        image: trip.tripsImage,
+      });
+    }
+  } catch (error) {
+    console.error('Error retrieving trip image:', error);
+    res.status(500).json({error: 'Internal server error'});
+  }
+};
+
 module.exports = {
   createTrip,
   getTripDetails,
@@ -301,4 +378,7 @@ module.exports = {
   updateTripCosts,
   getTripCosts,
   getAllMembers,
+  uploadMiddleware,
+  uploadTripsImage,
+  getTripImage,
 };

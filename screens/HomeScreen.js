@@ -7,6 +7,7 @@ import {
   TextInput,
   FlatList,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import React, {useState, useContext, useEffect} from 'react';
 import {windowHeight, windowWidth} from '../assets/utils/dimension';
@@ -22,11 +23,17 @@ import axios from 'axios';
 import {useFocusEffect} from '@react-navigation/native';
 import Entypo from 'react-native-vector-icons/Entypo';
 import {AuthContext} from '../assets/context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useIsFocused} from '@react-navigation/native';
 
 const HomeScreen = ({navigation}) => {
   const {userToken, userInfo} = useContext(AuthContext);
+  const DEFAULT_IMAGE =
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO58GTfinMVl3rGnFyh5tX1yoBQIVzqoLduw&usqp=CAU';
+  const isFocused = useIsFocused();
 
   const [searchinfo, setSearchInfo] = useState('');
+  const [tripsId, setTripsId] = useState();
 
   const [allTrips, setAllTrips] = useState(1);
 
@@ -34,6 +41,56 @@ const HomeScreen = ({navigation}) => {
   const [apiData, setApiData] = useState({});
 
   const [loading, setLoading] = useState(true);
+  const [tripImages, setTripImages] = useState({});
+
+  const getAllTripsByUserId = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/trip/getAllTripsById/${userInfo.savedUser._id}`,
+        {
+          headers: {
+            Authorization: `${userToken}`,
+          },
+        },
+      );
+
+      // Map over each trip and fetch its image
+      await Promise.all(
+        response.data.All_Trips.map(async item => {
+          try {
+            const tripId = item._id;
+            const tripImageResponse = await axios.get(
+              `http://localhost:8080/api/trip/tripsImage/${tripId}`,
+              {
+                headers: {
+                  Authorization: `${userToken}`,
+                },
+              },
+            );
+
+            // Update tripImages state with the fetched image
+            if (tripImageResponse.data.image) {
+              setTripImages(prevState => ({
+                ...prevState,
+                [tripId]: tripImageResponse.data.image,
+              }));
+            }
+          } catch (error) {
+            console.log(error, 'image getting error for individual trip card');
+          }
+        }),
+      );
+    } catch (error) {
+      console.log(error, 'All trips Id getting problem');
+      return DEFAULT_IMAGE;
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getAllTripsByUserId();
+    }, []),
+  );
 
   //API
   const fetchData = async () => {
@@ -94,6 +151,9 @@ const HomeScreen = ({navigation}) => {
   };
 
   const renderItem = ({item}) => {
+    const tripId = item._id;
+    const tripImageUrl = tripImages[tripId] || DEFAULT_IMAGE;
+    //console.log(item._id);
     return (
       <TripCard
         onPress={() => {
@@ -131,7 +191,22 @@ const HomeScreen = ({navigation}) => {
           fontSize: 11,
           marginTop: 3,
           fontWeight: '600',
-        }}></TripCard>
+        }}>
+        {tripImageUrl ===
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO58GTfinMVl3rGnFyh5tX1yoBQIVzqoLduw&usqp=CAU' ? (
+          <Image
+            source={{uri: tripImageUrl}}
+            style={{width: 40, height: 40, borderRadius: 20}}
+            resizeMode="cover"
+          />
+        ) : (
+          <Image
+            source={{uri: `http://localhost:8080/${tripImageUrl}`}}
+            style={{width: 40, height: 40, borderRadius: 20}}
+            resizeMode="cover"
+          />
+        )}
+      </TripCard>
     );
   };
 
