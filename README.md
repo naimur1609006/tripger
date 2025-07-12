@@ -73,7 +73,16 @@ If you can't get this to work, see the [Troubleshooting](https://reactnative.dev
 To learn more about React Native, take a look at the following resources:
 
 - [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
+- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** <img width="383" height="757" alt="Screenshot 2025-07-12 at 9 50 55 PM" src="https://github.com/user-attachments/assets/0e6587e0-f1e0-480b-90e5-84b49482f48a" />
+<img width="355" height="724" alt="Screenshot 2025-07-12 at 9 49 56 PM" src="https://github.com/user-attachments/assets/4a1272b9-38ab-491b-959c-56ea25c8fd11" />
+<img width="361" height="730" alt="Screenshot 2025-07-12 at 9 49 43 PM" src="https://github.com/user-attachments/assets/dd5535f0-c28f-4138-a3e2-7b38bf86b714" />
+<img width="359" height="733" alt="Screenshot 2025-07-12 at 9 49 30 PM" src="https://github.com/user-attachments/assets/b766bec4-14a9-4349-ace9-5516616b26a0" />
+<img width="365" height="731" alt="Screenshot 2025-07-12 at 9 49 18 PM" src="https://github.com/user-attachments/assets/c4bc9464-57a0-4ab2-b5df-ab4e07008313" />
+<img width="378" height="737" alt="Screenshot 2025-07-12 at 9 48 59 PM" src="https://github.com/user-attachments/assets/90ac5a65-1656-4ea3-b187-06e6e66dadc4" />
+<img width="396" height="731" alt="Screenshot 2025-07-12 at 9 48 29 PM" src="https://github.com/user-attachments/assets/d250f554-b6b1-426b-945b-4798bc2cbba5" />
+<img width="375" height="728" alt="Screenshot 2025-07-12 at 9 48 16 PM" src="https://github.com/user-attachments/assets/83528aac-e29f-434e-8a68-d6d8570c2db3" />
+<img width="372" height="734" alt="Screenshot 2025-07-12 at 9 48 03 PM" src="https://github.com/user-attachments/assets/cf12082d-a6fd-4ffd-9edc-b02751fcbe11" />
+of React Native and how setup your environment.
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
